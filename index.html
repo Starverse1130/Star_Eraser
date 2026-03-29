@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- SEO -->
+  <title>Star Eraser — AI Background Remover</title>
+  <meta name="description"             content="Star Eraser: Remove backgrounds from any image instantly using AI. Free online tool — upload, crop, remove, download. Supports passport photos, visa sizes, print sheets.">
+  <meta name="keywords"                content="background remover, remove background, AI background removal, passport photo, photo editor, star eraser">
+  <meta name="author"                  content="Ayush Gupta, Starverse">
+  <meta property="og:title"            content="Star Eraser — AI Background Remover">
+  <meta property="og:description"      content="Remove image backgrounds instantly with AI. Free, fast, and accurate.">
+  <meta property="og:type"             content="website">
+  <meta name="twitter:card"            content="summary_large_image">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Cropper.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+  <!-- App Styles (root) -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ═══ ANIMATED BACKGROUND ═══ -->
+  <div class="bg-anim" aria-hidden="true">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <!-- ═══ NAVBAR ═══ -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-brand" onclick="resetApp()" role="button" tabindex="0" aria-label="Star Eraser — go to home">
+      <div class="logo" aria-hidden="true"><i class="fa-solid fa-star"></i></div>
+      <h1>Star<span>Eraser</span></h1>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-btn" id="apiKeyBtn" title="API Key Settings" aria-label="Set your remove.bg API key">
+        <i class="fa-solid fa-key" id="apiKeyIcon"></i>
+        <span class="badge" id="apiKeyBadge" aria-label="free uses remaining"></span>
+      </button>
+      <button class="nav-btn" id="histBtn" title="History (H)" aria-label="Open history">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <span class="badge" id="histBadge" aria-label="history count">0</span>
+      </button>
+      <button class="nav-btn" id="themeBtn" title="Toggle Theme (T)" aria-label="Toggle dark/light mode">
+        <i class="fa-solid fa-moon" id="themeIcon"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══ TOAST NOTIFICATIONS ═══ -->
+  <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+  <!-- ═══ API KEY MODAL ═══ -->
+  <div class="modal-overlay" id="apiModalOverlay" aria-hidden="true"></div>
+  <div class="modal" id="apiModal" role="dialog" aria-modal="true" aria-label="API Key Settings">
+    <div class="modal-head">
+      <div class="modal-title">
+        <div class="modal-icon" id="modalIcon"><i class="fa-solid fa-key"></i></div>
+        <div>
+          <h2 id="modalHeading">Add Your API Key</h2>
+          <p id="modalSubtitle">Use your own remove.bg key for unlimited access</p>
+        </div>
+      </div>
+      <button class="icon-btn modal-close" id="closeApiModal" aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Free Usage Banner -->
+    <div class="free-banner" id="freeBanner">
+      <div class="free-banner-inner">
+        <div class="free-dots" id="freeDots"></div>
+        <div class="free-text">
+          <span class="free-count" id="freeCountText">5 free removals remaining</span>
+          <span class="free-sub" id="freeSubText">No key needed for first 5 images</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Steps -->
+    <div class="api-steps">
+      <div class="api-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Get your free API key</div>
+          <div class="step-desc">Sign up at remove.bg — free plan gives 50 API calls/month</div>
+          <a href="https://www.remove.bg/api" target="_blank" rel="noopener" class="api-link ripple-host">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            Open remove.bg/api
+          </a>
+        </div>
+      </div>
+      <div class="api-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Copy your API key</div>
+          <div class="step-desc">From your remove.bg dashboard → API Keys section</div>
+        </div>
+      </div>
+      <div class="api-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Paste it below</div>
+          <div class="api-input-wrap">
+            <i class="fa-solid fa-key api-input-icon"></i>
+            <input type="password" id="apiKeyInput" class="api-input" placeholder="e.g. AbCdEfGh1234…" autocomplete="off" spellcheck="false">
+            <button class="api-input-toggle" id="apiKeyToggle" title="Show/hide key" aria-label="Toggle key visibility">
+              <i class="fa-solid fa-eye" id="apiKeyEye"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Saved Key Status -->
+    <div class="key-saved-row hidden" id="keySavedRow">
+      <i class="fa-solid fa-circle-check" style="color:var(--accent)"></i>
+      <span id="keySavedText">Key saved — unlimited access enabled</span>
+      <button class="key-remove-btn" id="removeKeyBtn">Remove key</button>
+    </div>
+
+    <!-- Actions -->
+    <div class="modal-actions">
+      <button class="modal-cancel ripple-host" id="cancelApiModal">Maybe later</button>
+      <button class="modal-save ripple-host" id="saveApiKey">
+        <i class="fa-solid fa-floppy-disk"></i> Save Key
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <main class="main" role="main">
+
+    <!-- ═══ ADSTERRA SLOT 1 (TOP LEADERBOARD) ═══ -->
+    <div class="ad-container">
+      <div class="ad-slot ad-leaderboard">
+        <!-- PASTE ADSTERRA 728x90 (Desktop) OR 320x50 (Mobile) SCRIPT HERE -->
+      </div>
+    </div>
+
+    <!-- ── VIEW 1: UPLOAD ── -->
+    <section class="view active" id="uploadView" aria-label="Upload image">
+
+      <div class="hero">
+        <div class="hero-badge">
+          <i class="fa-solid fa-bolt"></i> Powered by remove.bg AI
+        </div>
+        <h2>Remove Any <span class="grad">Background</span><br>Instantly</h2>
+        <p>Upload a photo and our AI removes the background in seconds. Perfect for passports, IDs, and creative projects.</p>
+      </div>
+
+      <div class="drop-zone" id="dropZone" role="button" tabindex="0"
+           aria-label="Drop image here or click to upload"
+           onkeydown="if(event.key==='Enter'||event.key===' ') document.getElementById('fileInput').click()">
+        <div class="drop-zone-inner">
+          <div class="drop-icon" aria-hidden="true">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+          <h3>Drop your image here</h3>
+          <p class="sub">or click to browse files</p>
+          <div class="file-types" role="list">
+            <span class="file-badge" role="listitem">PNG</span>
+            <span class="file-badge" role="listitem">JPG</span>
+            <span class="file-badge" role="listitem">WEBP</span>
+            <span class="file-badge" role="listitem">Up to 12MB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="upload-hint" aria-hidden="true">
+        <kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">S</kbd> to save &nbsp;·&nbsp;
+        <kbd class="kbd">T</kbd> theme &nbsp;·&nbsp;
+        <kbd class="kbd">H</kbd> history &nbsp;·&nbsp;
+        <kbd class="kbd">K</kbd> API key &nbsp;·&nbsp;
+        <kbd class="kbd">Esc</kbd> close
+      </div>
+
+      <div class="stats-bar" role="region" aria-label="Usage statistics">
+        <div class="stat-item">
+          <div class="stat-val" id="sProcessed">0</div>
+          <div class="stat-lbl">Processed</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val" id="sFavs">0</div>
+          <div class="stat-lbl">Favorites</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val" id="sDownloads">0</div>
+          <div class="stat-lbl">Downloads</div>
+        </div>
+      </div>
+
+      <!-- ═══ ADSTERRA SLOT 2 (UPLOAD PAGE - NATIVE/RECTANGLE) ═══ -->
+      <div class="ad-container">
+        <div class="ad-slot ad-rect">
+          <!-- PASTE ADSTERRA 300x250 DISPLAY/NATIVE SCRIPT HERE -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── VIEW 2: CROP ── -->
+    <section class="view" id="cropView" aria-label="Crop image">
+      <div class="crop-card">
+        <div class="crop-header">
+          <h3><i class="fa-solid fa-crop-simple"></i> Crop Your Image</h3>
+          <span style="font-size:11px;color:var(--text-muted)">Drag to crop · Scroll to zoom</span>
+        </div>
+        <div class="crop-presets" id="cropPresets" role="list" aria-label="Crop aspect ratios"></div>
+        <div class="crop-area">
+          <img id="cropImg" alt="Image being cropped">
+        </div>
+        <div class="crop-footer">
+          <button class="crop-btn secondary ripple-host" id="skipCropBtn">
+            <i class="fa-solid fa-forward"></i> Skip Crop
+          </button>
+          <button class="crop-btn primary ripple-host" id="confirmCropBtn">
+            <i class="fa-solid fa-check"></i> Crop &amp; Continue
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── VIEW 3: PROCESSING ── -->
+    <section class="view" id="procView" aria-label="Processing image" aria-live="polite">
+      <div class="proc">
+        <div class="spinner-wrap" aria-hidden="true">
+          <div class="ring"></div>
+          <div class="ring"></div>
+          <div class="ring"></div>
+          <div class="spinner-center"><i class="fa-solid fa-star"></i></div>
+        </div>
+
+        <p class="proc-title">Removing Background…</p>
+        <p class="proc-sub">AI is working its magic ✨</p>
+
+        <!-- Processing Steps -->
+        <div class="proc-steps" id="procSteps">
+          <div class="proc-step active" data-step="upload">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Uploading
+          </div>
+          <div class="proc-step" data-step="analyse">
+            <i class="fa-solid fa-magnifying-glass"></i> Analysing
+          </div>
+          <div class="proc-step" data-step="remove">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Removing
+          </div>
+          <div class="proc-step" data-step="finish">
+            <i class="fa-solid fa-circle-check"></i> Finishing
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar-wrap" style="margin-top:20px">
+          <div class="progress-bar" id="progBar"></div>
+        </div>
+
+        <div class="proc-tip">
+          <i class="fa-solid fa-lightbulb"></i>
+          <span id="tipText">High-res images give the best results</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── VIEW 4: RESULT ── -->
+    <section class="view" id="resultView" aria-label="Result">
+      <div class="result-card">
+
+        <!-- Header -->
+        <div class="result-head">
+          <h3><i class="fa-solid fa-circle-check"></i> Background Removed!</h3>
+          <div class="result-head-actions">
+            <button class="icon-btn" id="favBtn" title="Favorite" aria-label="Add to favorites">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Image Meta -->
+        <div class="img-info" id="imgInfo" aria-label="Image information"></div>
+
+        <!-- Before / After Comparison -->
+        <div class="compare" id="compareBox" role="slider"
+             aria-label="Before and after comparison. Use arrow keys to adjust."
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+          <img class="img-orig" id="imgOrig" alt="Original image">
+          <img class="img-proc" id="imgProc" alt="Processed image with background removed">
+          <div class="slider-line" id="sLine" aria-hidden="true"></div>
+          <div class="slider-handle" id="sHandle" aria-hidden="true">
+            <i class="fa-solid fa-arrows-left-right"></i>
+          </div>
+          <span class="comp-label l-before" aria-hidden="true">Before</span>
+          <span class="comp-label l-after"  aria-hidden="true">After</span>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div class="toolbar" role="toolbar" aria-label="Image actions">
+          <button class="tb-btn ripple-host" id="bgPanelBtn"     aria-expanded="false">
+            <i class="fa-solid fa-palette"></i> Background
+          </button>
+          <button class="tb-btn ripple-host" id="printPanelBtn"  aria-expanded="false">
+            <i class="fa-solid fa-print"></i> Print Sheet
+          </button>
+          <button class="tb-btn ripple-host" id="copyBtn">
+            <i class="fa-regular fa-copy"></i> Copy
+          </button>
+          <button class="tb-btn ripple-host" id="shareBtn">
+            <i class="fa-solid fa-share-nodes"></i> Share
+          </button>
+          <button class="tb-btn ripple-host" id="exportPanelBtn" aria-expanded="false">
+            <i class="fa-solid fa-file-export"></i> Export
+          </button>
+          <button class="tb-btn primary ripple-host" id="quickDlBtn">
+            <i class="fa-solid fa-download"></i> Download
+          </button>
+        </div>
+      </div>
+
+      <!-- ── PANEL: BACKGROUND ── -->
+      <div class="panel" id="bgPanel" role="region" aria-label="Background replacement options">
+        <div class="panel-head">
+          <h4><i class="fa-solid fa-palette"></i> Replace Background</h4>
+          <button class="icon-btn" onclick="closePanel('bgPanel')" aria-label="Close background panel">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="panel-body">
+          <div class="section-title">Solid Colors</div>
+          <div class="bg-colors" id="bgColorsBox" role="list" aria-label="Background color options"></div>
+          <div class="section-title">Gradients</div>
+          <div class="bg-grads" id="bgGradsBox" role="list" aria-label="Gradient background options"></div>
+          <div class="section-title">Custom Image</div>
+          <button class="custom-bg-btn ripple-host" id="customBgBtn">
+            <i class="fa-solid fa-image"></i> Upload Background Image
+          </button>
+        </div>
+      </div>
+
+      <!-- ── PANEL: PRINT SHEET ── -->
+      <div class="panel" id="printPanel" role="region" aria-label="Photo print sheet options">
+        <div class="panel-head">
+          <h4><i class="fa-solid fa-print"></i> Photo Print Sheet</h4>
+          <button class="icon-btn" onclick="closePanel('printPanel')" aria-label="Close print panel">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="panel-body">
+          <div class="section-title">Select Photo Size</div>
+          <div class="size-grid" id="sizeGrid" role="list" aria-label="Photo size options"></div>
+
+          <div class="section-title">Number of Photos</div>
+          <div class="count-row" role="group" aria-label="Photo count">
+            <button class="count-btn ripple-host" id="countMinus" aria-label="Decrease count">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+            <div class="count-val" id="countVal" aria-live="polite">8</div>
+            <button class="count-btn ripple-host" id="countPlus" aria-label="Increase count">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+          <div class="count-info" id="countInfo">Max 30 photos per A4 sheet</div>
+
+          <div class="section-title">A4 Sheet Preview</div>
+          <div class="preview-wrap" id="previewWrap">
+            <canvas id="previewCanvas" aria-label="A4 sheet preview"></canvas>
+          </div>
+          <button class="gen-btn ripple-host" id="genSheetBtn">
+            <i class="fa-solid fa-download"></i> Download A4 Print Sheet
+          </button>
+        </div>
+      </div>
+
+      <!-- ── PANEL: EXPORT ── -->
+      <div class="panel" id="exportPanel" role="region" aria-label="Export options">
+        <div class="panel-head">
+          <h4><i class="fa-solid fa-file-export"></i> Export Options</h4>
+          <button class="icon-btn" onclick="closePanel('exportPanel')" aria-label="Close export panel">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="panel-body">
+          <div class="section-title">Format</div>
+          <div class="fmt-opts" role="group" aria-label="Export format" id="fmtOpts">
+            <button class="fmt-btn active" data-fmt="png"  aria-pressed="true">PNG</button>
+            <button class="fmt-btn"        data-fmt="jpeg" aria-pressed="false">JPEG</button>
+            <button class="fmt-btn"        data-fmt="webp" aria-pressed="false">WebP</button>
+          </div>
+          <div class="quality-group" id="qualGroup" style="display:none">
+            <label>Quality <span id="qualVal">92%</span></label>
+            <input type="range" id="qualSlider" min="10" max="100" value="92" aria-label="Export quality">
+          </div>
+          <div style="margin-top:18px">
+            <button class="dl-btn ripple-host" id="exportDlBtn">
+              <i class="fa-solid fa-download"></i> Download Image
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button class="new-btn ripple-host" id="newBtn">
+        <i class="fa-solid fa-plus"></i> Process Another Image
+      </button>
+
+      <!-- ═══ ADSTERRA SLOT 3 (RESULT PAGE - HIGH CTR RECTANGLE) ═══ -->
+      <div class="ad-container">
+        <div class="ad-slot ad-rect">
+          <!-- PASTE ADSTERRA 300x250 SCRIPT HERE (Users spend a lot of time on this screen) -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ═══ HISTORY SIDE PANEL ═══ -->
+  <div class="hist-overlay" id="histOverlay" aria-hidden="true"></div>
+  <aside class="hist-panel" id="histPanel" role="complementary" aria-label="Processing history">
+    <div class="hist-head">
+      <h3><i class="fa-solid fa-clock-rotate-left"></i> History</h3>
+      <button class="icon-btn" id="closeHistBtn" aria-label="Close history">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="hist-search">
+      <input type="search" placeholder="Search by filename…" id="histSearchInput" aria-label="Search history">
+    </div>
+    <div class="hist-list" id="histList" role="list"></div>
+    <div class="hist-foot">
+      <button class="clear-btn ripple-host" id="clearHistBtn">
+        <i class="fa-solid fa-trash-can"></i> Clear All History
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══ HIDDEN INPUTS & CANVAS ═══ -->
+  <input type="file" class="hidden" id="fileInput"   accept="image/png,image/jpeg,image/webp" aria-hidden="true">
+  <input type="file" class="hidden" id="bgFileInput" accept="image/*"                         aria-hidden="true">
+  <canvas class="offscreen" id="offCanvas" aria-hidden="true"></canvas>
+
+  <!-- ═══ ADSTERRA SLOT 4 (POPUNDER/SOCIAL BAR) ═══ -->
+  <!-- PASTE ADSTERRA POPUNDER / SOCIAL BAR JS SCRIPT DIRECTLY BELOW THIS LINE -->
+
+
+  <!-- ═══ SCRIPTS ═══ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+  <script src="script.js"></script>
+
+</body>
+</html>
