@@ -733,10 +733,12 @@ function setHist(h) {
   }
 }
 
-function saveToHist() {
+async function saveToHist() {
   const h = getHist();
+  const thumbSource = S.originalImage || S.croppedImage || S.processedImage;
+  const thumb = await createThumb(thumbSource, 180);
   h.unshift({
-    id:S.histId, thumb:createThumb(S.processedImage, 180),
+    id:S.histId, thumb:thumb,
     processed:S.processedImage, original:S.croppedImage||S.originalImage,
     name:S.currentFile?.name||'image', size:S.currentFile?.size||0,
     ts:Date.now(), fav:false,
@@ -746,14 +748,21 @@ function saveToHist() {
 }
 
 function createThumb(dataUrl, maxDim) {
-  try {
-    const cv = document.createElement('canvas'), ctx = cv.getContext('2d'), img = new Image();
-    img.src = dataUrl;
-    const sc = Math.min(maxDim/(img.naturalWidth||maxDim), maxDim/(img.naturalHeight||maxDim), 1);
-    cv.width  = (img.naturalWidth||maxDim)*sc; cv.height = (img.naturalHeight||maxDim)*sc;
-    ctx.drawImage(img, 0, 0, cv.width, cv.height);
-    return cv.toDataURL('image/jpeg', .5);
-  } catch { return dataUrl; }
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        const cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+        const sc = Math.min(maxDim / img.naturalWidth, maxDim / img.naturalHeight, 1);
+        cv.width  = img.naturalWidth * sc;
+        cv.height = img.naturalHeight * sc;
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        resolve(cv.toDataURL('image/jpeg', .5));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    } catch { resolve(dataUrl); }
+  });
 }
 
 function renderHist() {

@@ -1256,3 +1256,201 @@ canvas.offscreen { display:none; }
   .free-banner, .api-steps, .modal-actions { margin-left:16px; margin-right:16px; padding-left:0; padding-right:0; }
   .key-saved-row { margin:0 16px; }
 }
+
+/*═══════════════════════════════════════
+  ADVERTISEMENT CONTAINERS
+═══════════════════════════════════════*/
+
+/* Base ad container */
+.ad-container {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  z-index:10;
+  opacity:0;
+  animation:adFadeSlideIn .8s cubic-bezier(.4,0,.2,1) .3s forwards;
+}
+
+@keyframes adFadeSlideIn {
+  0%   { opacity:0; transform:translateY(12px); }
+  100% { opacity:1; transform:translateY(0); }
+}
+
+/* "Sponsored" label */
+.ad-label {
+  font-size:9px;
+  font-weight:600;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:6px;
+  opacity:.65;
+  transition:opacity var(--transition);
+  user-select:none;
+}
+
+.ad-container:hover .ad-label {
+  opacity:.4;
+}
+
+/* Ad slot wrapper */
+.ad-slot {
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:border-color var(--transition), box-shadow var(--transition);
+  position:relative;
+}
+
+.ad-slot::before {
+  content:'';
+  position:absolute;
+  inset:-1px;
+  border-radius:var(--radius-sm);
+  background:linear-gradient(135deg, rgba(124,92,252,.08), rgba(0,212,170,.06));
+  z-index:-1;
+  opacity:0;
+  transition:opacity var(--transition);
+}
+
+.ad-container:hover .ad-slot {
+  border-color:var(--border-hover);
+  box-shadow:0 4px 20px rgba(0,0,0,.06);
+}
+
+.ad-container:hover .ad-slot::before {
+  opacity:1;
+}
+
+/* Responsive display classes */
+.ad-desktop-only { display:block; }
+.ad-tablet-only  { display:none; }
+.ad-mobile-only  { display:none; }
+
+@media(max-width:768px) {
+  .ad-desktop-only { display:none; }
+  .ad-tablet-only  { display:block; }
+  .ad-mobile-only  { display:none; }
+}
+
+@media(max-width:480px) {
+  .ad-desktop-only { display:none; }
+  .ad-tablet-only  { display:none; }
+  .ad-mobile-only  { display:block; }
+}
+
+/* ── Top Banner ── */
+.ad-top-banner {
+  padding:10px 16px 4px;
+  background:var(--bg-secondary);
+  border-bottom:1px solid var(--border);
+}
+
+.ad-top-banner .ad-slot {
+  background:transparent;
+  border:none;
+  border-radius:0;
+}
+
+.ad-top-banner .ad-slot::before {
+  display:none;
+}
+
+/* ── Mid-content (300x250) ── */
+.ad-mid-content {
+  margin-top:28px;
+  padding:20px 0;
+}
+
+.ad-mid-content .ad-slot {
+  padding:8px;
+  border-radius:var(--radius);
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  box-shadow:0 2px 12px rgba(0,0,0,.04);
+  position:relative;
+  overflow:hidden;
+}
+
+/* Subtle shimmer effect on mid-content ad */
+.ad-mid-content .ad-slot::after {
+  content:'';
+  position:absolute;
+  top:0; left:-100%;
+  width:50%; height:100%;
+  background:linear-gradient(90deg, transparent, var(--shimmer-to), transparent);
+  animation:adShimmer 6s ease-in-out infinite;
+  pointer-events:none;
+  z-index:1;
+}
+
+@keyframes adShimmer {
+  0%   { left:-100%; }
+  40%  { left:200%; }
+  100% { left:200%; }
+}
+
+/* ── Native Banner (after result) ── */
+.ad-native-banner {
+  margin-top:24px;
+  padding:16px 0;
+}
+
+.ad-native-banner .ad-slot {
+  width:100%;
+  max-width:720px;
+  padding:12px;
+  border-radius:var(--radius);
+  background:var(--bg-card);
+  border:1px solid var(--border);
+}
+
+/* ── Responsive adjustments ── */
+@media(max-width:768px) {
+  .ad-top-banner {
+    padding:8px 12px 2px;
+  }
+  .ad-mid-content {
+    margin-top:20px;
+    padding:16px 0;
+  }
+  .ad-native-banner {
+    margin-top:18px;
+    padding:12px 0;
+  }
+}
+
+@media(max-width:480px) {
+  .ad-top-banner {
+    padding:6px 8px 2px;
+  }
+  .ad-mid-content {
+    margin-top:16px;
+    padding:12px 0;
+  }
+  .ad-mid-content .ad-slot {
+    padding:4px;
+    border-radius:var(--radius-sm);
+  }
+  .ad-native-banner {
+    margin-top:14px;
+    padding:8px 0;
+  }
+  .ad-native-banner .ad-slot {
+    padding:8px;
+    border-radius:var(--radius-sm);
+  }
+}
+
+/* Ad iframe auto-centering */
+.ad-slot iframe {
+  display:block;
+  margin:0 auto;
+  max-width:100%;
+}
